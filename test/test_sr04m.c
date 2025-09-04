@@ -28,6 +28,7 @@ void test_SR04M_t_PrintingMode_CorrectResponse_ShouldParseDistance(void)
 {
     SR04M_Object obj;
     uint16_t distance = 0;
+    SR04M_Modes mode = MODE5;
 
     obj.ctx.readReg  = fake_readReg;
     obj.ctx.writeReg = fake_writeReg;
@@ -36,7 +37,7 @@ void test_SR04M_t_PrintingMode_CorrectResponse_ShouldParseDistance(void)
     const char* response = "Gap=1234mm\r\n";
     memcpy(fake_rx_buffer, response, 12);
 
-    SR04M_Status status = SR04M_t_PrintingMode(&obj, &distance);
+    SR04M_Status status = SR04M_t_PrintingMode(&obj, &distance, mode);
 
     TEST_ASSERT_EQUAL(SR04M_OK, status);
     TEST_ASSERT_EQUAL_UINT16(1234, distance);
@@ -46,6 +47,7 @@ void test_SR04M_t_PrintingMode_InvalidPrefix_ShouldReturnError(void)
 {
     SR04M_Object obj;
     uint16_t distance = 0;
+    SR04M_Modes mode = MODE5;
 
     obj.ctx.readReg  = fake_readReg;
     obj.ctx.writeReg = fake_writeReg;
@@ -54,7 +56,7 @@ void test_SR04M_t_PrintingMode_InvalidPrefix_ShouldReturnError(void)
     const char* response = "Xap=123mm\r\n";
     memcpy(fake_rx_buffer, response, 12);
 
-    SR04M_Status status = SR04M_t_PrintingMode(&obj, &distance);
+    SR04M_Status status = SR04M_t_PrintingMode(&obj, &distance, mode);
 
     TEST_ASSERT_EQUAL(SR04M_ERROR, status);
 }

@@ -109,7 +109,7 @@ SR04M_Modes e_currentMode = 0;
 /*                                         Public Functions                                       */
 /* ============================================================================================== */
 
-SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io, SR04M_Modes te_mode)
+SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io)
 {
   SR04M_Status u_ret = SR04M_OK;
 
@@ -126,23 +126,19 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io, SR04M_Modes te_mo
     p_obj->ctx.writeReg = SR04M_u_WriteRegWrap;
     p_obj->ctx.handle   = p_obj;
   }
+
+  return u_ret;
+}
+
+SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04M_Modes te_mode)
+{
+  SR04M_Status u_ret = SR04M_OK;
+
   if((te_mode > MODE5) || (te_mode < MODE1))
   {
     u_ret = SR04M_ERROR;
   }
   else
-  {
-    e_currentMode = te_mode;
-  }
-
-  return u_ret;
-}
-
-SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance)
-{
-  SR04M_Status u_ret = SR04M_OK;
-
-  if(e_currentMode != 0)
   {
     switch(e_currentMode)
     {
@@ -165,10 +161,6 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance)
       default:
         break;
     }
-  }
-  else
-  {
-    u_ret = SR04M_ERROR;
   }
 
   return u_ret;

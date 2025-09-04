@@ -195,7 +195,7 @@ typedef enum
  * \retval SR04M_OK    Initialization successful.
  * \retval SR04M_ERROR Null pointer or invalid function pointers provided.
  */
-SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io, SR04M_Modes te_mode);
+SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io);
 
 /** **********************************************************************************************
  * \brief Measures and returns the distance detected by the SR04M sensor.
@@ -206,7 +206,7 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io, SR04M_Modes te_mo
  *
  * \return Distance in centimeters (0–400). Returns 0 if measurement fails or sensor is not initialized.
  */
-SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance);
+SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04M_Modes te_mode);
 
 #ifdef __cplusplus
 }
