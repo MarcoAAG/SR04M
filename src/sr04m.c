@@ -26,6 +26,7 @@ extern "C" {
 /* ============================================================================================== */
 #define TX_LEN       1
 #define MODE5_RX_LEN 12
+#define MODE4_RX_LEN 4
 #define MAX_DIGITS   5
 #define MIN_DIGITS   4
 #define PREFIX       "Gap="
@@ -100,10 +101,7 @@ SR04M_Status SR04M_t_PrintingMode(SR04M_Object* p_obj, uint16_t* u_distance);
 
 SR04M_Status SR04M_t_StrValidator(const char* pu_str, uint8_t* pu_arr, uint8_t u_startIndex, uint8_t u_endIndex);
 
-/* ============================================================================================== */
-/*                                    Private Global Variable                                     */
-/* ============================================================================================== */
-SR04M_Modes e_currentMode = 0;
+static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distance);
 
 /* ============================================================================================== */
 /*                                         Public Functions                                       */
@@ -140,7 +138,7 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04
   }
   else
   {
-    switch(e_currentMode)
+    switch(te_mode)
     {
       case MODE1:
         /* code */
@@ -152,7 +150,7 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04
         /* code */
         break;
       case MODE4:
-        /* code */
+        u_ret = SR04M_t_SerialModeLP(p_obj, u_distance);
         break;
       case MODE5:
         u_ret = SR04M_t_PrintingMode(p_obj, u_distance);
@@ -192,6 +190,36 @@ static uint32_t SR04M_u_ReadReg(SR04M_CTX* p_ctx, uint8_t* p_data, uint8_t u_len
 static uint32_t SR04M_u_WriteReg(SR04M_CTX* p_ctx, uint8_t* p_data, uint8_t u_length)
 {
   return p_ctx->writeReg(p_ctx->handle, p_data, u_length);
+}
+
+static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distance)
+{
+  SR04M_Status e_retVal                 = SR04M_OK;
+  uint8_t      a_txBuffer[TX_LEN]       = { 1u };
+  uint8_t      a_rxBuffer[MODE4_RX_LEN] = { 0u };
+  uint8_t      u_checksum;
+
+  SR04M_u_WriteReg(&p_obj->ctx, a_txBuffer, TX_LEN);
+  SR04M_u_ReadReg(&p_obj->ctx, a_rxBuffer, MODE4_RX_LEN);
+
+  if(a_rxBuffer[0] == 0xFF)
+  {
+    u_checksum = (a_rxBuffer[0] + a_rxBuffer[1] + a_rxBuffer[2]) & a_rxBuffer[0];
+    if(u_checksum == a_rxBuffer[3])
+    {
+      *u_distance = (a_rxBuffer[1] * 256) + a_rxBuffer[2];
+    }
+    else
+    {
+      e_retVal = SR04M_ERROR;
+    }
+  }
+  else
+  {
+    e_retVal = SR04M_ERROR;
+  }
+
+  return e_retVal;
 }
 
 /*
