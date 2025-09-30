@@ -15,6 +15,7 @@
 /*                                         Include Files                                          */
 /* ============================================================================================== */
 #include <sr04m.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -123,6 +124,8 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io)
     p_obj->ctx.readReg  = SR04M_u_ReadRegWrap;
     p_obj->ctx.writeReg = SR04M_u_WriteRegWrap;
     p_obj->ctx.handle   = p_obj;
+
+    p_obj->isInitialized = true;
   }
 
   return u_ret;
@@ -132,33 +135,41 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04
 {
   SR04M_Status u_ret = SR04M_OK;
 
-  if((te_mode > MODE5) || (te_mode < MODE1))
+  if(p_obj->isInitialized == true)
   {
-    u_ret = SR04M_ERROR;
+    if((te_mode > MODE5) || (te_mode < MODE1))
+    {
+      u_ret = SR04M_ERROR;
+    }
+    else
+    {
+      switch(te_mode)
+      {
+        case MODE1:
+          /* code */
+          break;
+        case MODE2:
+          /* code */
+          break;
+        case MODE3:
+          /* code */
+          break;
+        case MODE4:
+          u_ret = SR04M_t_SerialModeLP(p_obj, u_distance);
+          break;
+        case MODE5:
+          u_ret = SR04M_t_PrintingMode(p_obj, u_distance);
+          /* code */
+          break;
+        default:
+          break;
+      }
+    }
   }
+
   else
   {
-    switch(te_mode)
-    {
-      case MODE1:
-        /* code */
-        break;
-      case MODE2:
-        /* code */
-        break;
-      case MODE3:
-        /* code */
-        break;
-      case MODE4:
-        u_ret = SR04M_t_SerialModeLP(p_obj, u_distance);
-        break;
-      case MODE5:
-        u_ret = SR04M_t_PrintingMode(p_obj, u_distance);
-        /* code */
-        break;
-      default:
-        break;
-    }
+    u_ret = SR04M_ERROR;
   }
 
   return u_ret;
