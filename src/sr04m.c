@@ -26,13 +26,7 @@ extern "C" {
 /*                                        Defines & Macros                                        */
 /* ============================================================================================== */
 #define TX_LEN       1
-#define MODE5_RX_LEN 12
 #define MODE4_RX_LEN 4
-#define MAX_DIGITS   5
-#define MIN_DIGITS   4
-#define PREFIX       "Gap="
-#define SUFFIX       "mm\r\n"
-#define IS_DIGIT(c)  ((c) >= '0' && (c) <= '9')
 
 /* ============================================================================================== */
 /*                                    Private Function Prototypes                                 */
@@ -98,10 +92,6 @@ static uint32_t SR04M_u_WriteReg(SR04M_CTX* p_ctx, uint8_t* p_data, uint8_t u_le
 
 /** @} */ // end of SR04M_Private_IO
 
-SR04M_Status SR04M_t_PrintingMode(SR04M_Object* p_obj, uint16_t* u_distance);
-
-SR04M_Status SR04M_t_StrValidator(const char* pu_str, uint8_t* pu_arr, uint8_t u_startIndex, uint8_t u_endIndex);
-
 static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distance);
 
 /* ============================================================================================== */
@@ -131,19 +121,19 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io)
   return u_ret;
 }
 
-SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04M_Modes te_mode)
+SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance)
 {
   SR04M_Status u_ret = SR04M_OK;
 
   if(p_obj->isInitialized == true)
   {
-    if((te_mode > MODE5) || (te_mode < MODE1))
+    if((p_obj->mode > MODE5) || (p_obj->mode < MODE1))
     {
       u_ret = SR04M_ERROR;
     }
     else
     {
-      switch(te_mode)
+      switch(p_obj->mode)
       {
         case MODE1:
           /* code */
@@ -158,7 +148,6 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04
           u_ret = SR04M_t_SerialModeLP(p_obj, u_distance);
           break;
         case MODE5:
-          u_ret = SR04M_t_PrintingMode(p_obj, u_distance);
           /* code */
           break;
         default:
@@ -166,7 +155,6 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04
       }
     }
   }
-
   else
   {
     u_ret = SR04M_ERROR;
@@ -203,6 +191,11 @@ static uint32_t SR04M_u_WriteReg(SR04M_CTX* p_ctx, uint8_t* p_data, uint8_t u_le
   return p_ctx->writeReg(p_ctx->handle, p_data, u_length);
 }
 
+// Receive 4 bytes
+// [0] -> Header (Shall be 0xFF)
+// [1] -> MSB 8bits (distance is expresed in 16bits)
+// [2] -> LSB 8bits (distance is expresed in 16bits)
+// [3] -> Checksum (([0] + [1] + [2]) & [0])
 static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distance)
 {
   SR04M_Status e_retVal                 = SR04M_OK;
@@ -222,92 +215,12 @@ static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distan
     }
     else
     {
-      e_retVal = SR04M_ERROR;
+      e_retVal = SR04M_ERR_CHECKSUM;
     }
   }
   else
   {
-    e_retVal = SR04M_ERROR;
-  }
-
-  return e_retVal;
-}
-
-/*
-0x47 -> "G"
-0x61 -> "a"
-0x70 -> "p"
-0x37 -> "="
-0xXX -> number
-0xXX -> number
-0xXX -> number
-0xXX -> number
-0xXX -> number (optional)
-0x6D -> "m"
-0x6D -> "m"
-0x0D -> CR "\r"
-0x0A -> LF "\n"
-*/
-SR04M_Status SR04M_t_PrintingMode(SR04M_Object* p_obj, uint16_t* u_distance)
-{
-  uint8_t      a_txBuffer[TX_LEN]       = { 1u };
-  uint8_t      a_rxBuffer[MODE5_RX_LEN] = { 0u };
-  SR04M_Status e_retVal                 = SR04M_OK;
-  uint8_t      u_digitStart             = 4u;
-  uint16_t     u_value                  = 0u;
-
-  SR04M_u_WriteReg(&p_obj->ctx, a_txBuffer, TX_LEN);
-  SR04M_u_ReadReg(&p_obj->ctx, a_rxBuffer, MODE5_RX_LEN);
-
-  // Validate prefix "Gap="
-  if(SR04M_t_StrValidator(PREFIX, a_rxBuffer, 0, 3) == SR04M_OK)
-  {
-    uint8_t u_index      = u_digitStart;
-    uint8_t u_digitCount = 0;
-
-    while(u_index < MODE5_RX_LEN && IS_DIGIT(a_rxBuffer[u_index]) && u_digitCount < MAX_DIGITS)
-    {
-      u_value = (u_value * 10) + (a_rxBuffer[u_index] - '0');
-      u_index++;
-      u_digitCount++;
-    }
-
-    if(u_digitCount < MIN_DIGITS || u_digitCount > MAX_DIGITS)
-    {
-      e_retVal = SR04M_ERROR;
-    }
-    else
-    {
-      if(SR04M_t_StrValidator(SUFFIX, a_rxBuffer, u_index, u_index + 3) == SR04M_OK)
-      {
-        *u_distance = u_value;
-      }
-      else
-      {
-        e_retVal = SR04M_ERROR;
-      }
-    }
-  }
-  else
-  {
-    e_retVal = SR04M_ERROR;
-  }
-
-  return e_retVal;
-}
-
-SR04M_Status SR04M_t_StrValidator(const char* pu_str, uint8_t* pu_arr, uint8_t u_startIndex, uint8_t u_endIndex)
-{
-  SR04M_Status e_retVal = SR04M_OK;
-  uint8_t      u_index  = u_startIndex;
-
-  for(u_index = u_startIndex; u_index <= u_endIndex; u_index++)
-  {
-    if(pu_arr[u_index] != pu_str[u_index - u_startIndex])
-    {
-      e_retVal = SR04M_ERROR;
-      break;
-    }
+    e_retVal = SR04M_ERR_HEADER;
   }
 
   return e_retVal;

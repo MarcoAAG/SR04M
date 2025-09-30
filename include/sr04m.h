@@ -35,6 +35,23 @@ typedef uint32_t (*SR04M_ReadRegFunc)(uint8_t*, uint8_t);
 typedef uint32_t (*SR04M_WriteFunc)(void*, uint8_t*, uint8_t);
 typedef uint32_t (*SR04M_ReadFunc)(void*, uint8_t*, uint8_t);
 
+typedef enum
+{
+  MODE1 = 1,
+  MODE2,
+  MODE3,
+  MODE4,
+  MODE5
+} SR04M_Modes;
+
+typedef enum
+{
+  SR04M_OK           = 0,
+  SR04M_ERROR        = -1,
+  SR04M_ERR_CHECKSUM = -2,
+  SR04M_ERR_HEADER   = -3
+} SR04M_Status;
+
 /** **********************************************************************************************
  * \defgroup SR04M_Context SR04M Driver Context
  * \brief Data structure used to configure and access the SR04M ultrasonic sensor.
@@ -160,24 +177,15 @@ typedef struct
    */
   uint8_t isInitialized;
 
+  /**
+   * \brief Mode to obtain raw value
+   *
+   */
+  SR04M_Modes mode;
+
 } SR04M_Object;
 
 /** @} */ // end of SR04M_Object_Instance
-
-typedef enum
-{
-  MODE1 = 1,
-  MODE2,
-  MODE3,
-  MODE4,
-  MODE5
-} SR04M_Modes;
-
-typedef enum
-{
-  SR04M_OK    = 0,
-  SR04M_ERROR = -1
-} SR04M_Status;
 
 /* ============================================================================================== */
 /*                                         Public Functions                                       */
@@ -206,7 +214,7 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io);
  *
  * \return Distance in centimeters (0–400). Returns 0 if measurement fails or sensor is not initialized.
  */
-SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance, SR04M_Modes te_mode);
+SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance);
 
 #ifdef __cplusplus
 }
