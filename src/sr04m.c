@@ -31,6 +31,7 @@ extern "C" {
 SR04M_Drv SR04M_Driver = {
   SR04M_u_Init,
   SR04M_u_GetDistance,
+  SR04M_u_SetMode,
 };
 
 /* ============================================================================================== */
@@ -197,6 +198,11 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance)
   }
 
   return u_ret;
+}
+
+void SR04M_u_SetMode(SR04M_Object* p_obj, SR04M_Modes e_mode)
+{
+  p_obj->mode = e_mode;
 }
 
 /* ============================================================================================== */

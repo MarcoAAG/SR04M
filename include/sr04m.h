@@ -195,6 +195,7 @@ typedef struct
 {
   SR04M_Status (*Init)(SR04M_Object*);
   SR04M_Status (*GetDistance)(SR04M_Object*, uint16_t*);
+  void (*SetMode)(SR04M_Object*, SR04M_Modes);
 } SR04M_Drv;
 
 extern SR04M_Drv SR04M_Driver;
@@ -229,6 +230,8 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj);
  * \return Distance in centimeters (0–400). Returns 0 if measurement fails or sensor is not initialized.
  */
 SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance);
+
+void SR04M_u_SetMode(SR04M_Object* p_obj, SR04M_Modes e_mode);
 
 #ifdef __cplusplus
 }
