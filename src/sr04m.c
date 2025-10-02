@@ -28,6 +28,11 @@ extern "C" {
 #define TX_LEN       1
 #define MODE4_RX_LEN 4
 
+SR04M_Drv SR04M_Driver = {
+  SR04M_u_Init,
+  SR04M_u_GetDistance,
+};
+
 /* ============================================================================================== */
 /*                                    Private Function Prototypes                                 */
 /* ============================================================================================== */
@@ -98,7 +103,38 @@ static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distan
 /*                                         Public Functions                                       */
 /* ============================================================================================== */
 
-SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io)
+SR04M_Status SR04M_e_RegisterBusIO(SR04M_Object* p_obj, SR04M_IO* p_io)
+{
+  SR04M_Status e_retVal = SR04M_OK;
+
+  if(p_obj != NULL)
+  {
+    p_obj->io.writeReg = p_io->writeReg;
+    p_obj->io.readReg  = p_io->readReg;
+
+    p_obj->ctx.readReg  = SR04M_u_ReadRegWrap;
+    p_obj->ctx.writeReg = SR04M_u_WriteRegWrap;
+
+    p_obj->ctx.handle = p_obj;
+
+    if(p_obj->io.init != NULL)
+    {
+      e_retVal = p_obj->io.init();
+    }
+    else
+    {
+      e_retVal = SR04M_ERROR;
+    }
+  }
+  else
+  {
+    e_retVal = SR04M_ERROR;
+  }
+
+  return e_retVal;
+}
+
+SR04M_Status SR04M_u_Init(SR04M_Object* p_obj)
 {
   SR04M_Status u_ret = SR04M_OK;
 
@@ -108,14 +144,14 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io)
   }
   else
   {
-    p_obj->io.writeReg = p_io->writeReg;
-    p_obj->io.readReg  = p_io->readReg;
-
-    p_obj->ctx.readReg  = SR04M_u_ReadRegWrap;
-    p_obj->ctx.writeReg = SR04M_u_WriteRegWrap;
-    p_obj->ctx.handle   = p_obj;
-
-    p_obj->isInitialized = true;
+    if(p_obj->isInitialized != true)
+    {
+      p_obj->isInitialized = true;
+    }
+    else
+    {
+      u_ret = SR04M_ERR_DEINIT;
+    }
   }
 
   return u_ret;

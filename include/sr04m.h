@@ -30,6 +30,7 @@ extern "C" {
 /* ============================================================================================== */
 /*                                         Public Types                                           */
 /* ============================================================================================== */
+typedef uint8_t (*SR04M_Init_Func)(void);
 typedef uint32_t (*SR04M_WriteRegFunc)(uint8_t*, uint8_t);
 typedef uint32_t (*SR04M_ReadRegFunc)(uint8_t*, uint8_t);
 typedef uint32_t (*SR04M_WriteFunc)(void*, uint8_t*, uint8_t);
@@ -49,7 +50,8 @@ typedef enum
   SR04M_OK           = 0,
   SR04M_ERROR        = -1,
   SR04M_ERR_CHECKSUM = -2,
-  SR04M_ERR_HEADER   = -3
+  SR04M_ERR_HEADER   = -3,
+  SR04M_ERR_DEINIT   = -4
 } SR04M_Status;
 
 /** **********************************************************************************************
@@ -112,6 +114,8 @@ typedef struct
  */
 typedef struct
 {
+  SR04M_Init_Func init;
+
   /**
    * \brief Function pointer to write to a device register.
    *
@@ -187,9 +191,19 @@ typedef struct
 
 /** @} */ // end of SR04M_Object_Instance
 
+typedef struct
+{
+  SR04M_Status (*Init)(SR04M_Object*);
+  SR04M_Status (*GetDistance)(SR04M_Object*, uint16_t*);
+} SR04M_Drv;
+
+extern SR04M_Drv SR04M_Driver;
+
 /* ============================================================================================== */
 /*                                         Public Functions                                       */
 /* ============================================================================================== */
+
+SR04M_Status SR04M_e_RegisterBusIO(SR04M_Object* p_obj, SR04M_IO* p_io);
 
 /** **********************************************************************************************
  * \brief Initializes the SR04M driver instance.
@@ -203,7 +217,7 @@ typedef struct
  * \retval SR04M_OK    Initialization successful.
  * \retval SR04M_ERROR Null pointer or invalid function pointers provided.
  */
-SR04M_Status SR04M_u_Init(SR04M_Object* p_obj, SR04M_IO* p_io);
+SR04M_Status SR04M_u_Init(SR04M_Object* p_obj);
 
 /** **********************************************************************************************
  * \brief Measures and returns the distance detected by the SR04M sensor.
