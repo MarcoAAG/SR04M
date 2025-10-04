@@ -110,6 +110,7 @@ SR04M_Status SR04M_e_RegisterBusIO(SR04M_Object* p_obj, SR04M_IO* p_io)
 
   if(p_obj != NULL)
   {
+    p_obj->io.init     = p_io->init;
     p_obj->io.writeReg = p_io->writeReg;
     p_obj->io.readReg  = p_io->readReg;
 
