@@ -33,6 +33,7 @@ extern "C" {
 typedef uint8_t (*SR04M_Init_Func)(void);
 typedef uint32_t (*SR04M_WriteRegFunc)(uint8_t*, uint8_t);
 typedef uint32_t (*SR04M_ReadRegFunc)(uint8_t*, uint8_t);
+typedef uint8_t (*SR04M_DelayFunc)(uint32_t);
 typedef uint32_t (*SR04M_WriteFunc)(void*, uint8_t*, uint8_t);
 typedef uint32_t (*SR04M_ReadFunc)(void*, uint8_t*, uint8_t);
 
@@ -136,6 +137,8 @@ typedef struct
    */
   SR04M_ReadRegFunc readReg;
 
+  SR04M_DelayFunc delay;
+
 } SR04M_IO;
 
 /** @} */ // end of SR04M_IO_Interface
@@ -195,6 +198,7 @@ typedef struct
 {
   SR04M_Status (*Init)(SR04M_Object*);
   SR04M_Status (*GetDistance)(SR04M_Object*, uint16_t*);
+  SR04M_Status (*GetFilteredDistance)(SR04M_Object*, uint16_t*);
   void (*SetMode)(SR04M_Object*, SR04M_Modes);
 } SR04M_Drv;
 
@@ -230,6 +234,8 @@ SR04M_Status SR04M_u_Init(SR04M_Object* p_obj);
  * \return Distance in centimeters (0–400). Returns 0 if measurement fails or sensor is not initialized.
  */
 SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance);
+
+SR04M_Status SR04M_u_GetFilteredDistance(SR04M_Object* p_obj, uint16_t* u_distance);
 
 void SR04M_u_SetMode(SR04M_Object* p_obj, SR04M_Modes e_mode);
 

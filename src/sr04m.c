@@ -31,6 +31,7 @@ extern "C" {
 SR04M_Drv SR04M_Driver = {
   SR04M_u_Init,
   SR04M_u_GetDistance,
+  SR04M_u_GetFilteredDistance,
   SR04M_u_SetMode,
 };
 
@@ -99,6 +100,8 @@ static uint32_t SR04M_u_WriteReg(SR04M_CTX* p_ctx, uint8_t* p_data, uint8_t u_le
 /** @} */ // end of SR04M_Private_IO
 
 static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distance);
+
+static uint16_t SR04M_u_GetMedium(uint16_t u_arr[], uint8_t u_len);
 
 /* ============================================================================================== */
 /*                                         Public Functions                                       */
@@ -201,6 +204,24 @@ SR04M_Status SR04M_u_GetDistance(SR04M_Object* p_obj, uint16_t* u_distance)
   return u_ret;
 }
 
+SR04M_Status SR04M_u_GetFilteredDistance(SR04M_Object* p_obj, uint16_t* u_distance)
+{
+  SR04M_Status u_ret = SR04M_OK;
+  uint16_t     u_rawDistance[10];
+  uint8_t      u_counter = 0u;
+
+  while(u_ret == SR04M_OK && u_counter < 10u)
+  {
+    u_ret = SR04M_u_GetDistance(p_obj, &u_rawDistance[u_counter]);
+    p_obj->io.delay(10u);
+    u_counter++;
+  }
+
+  *u_distance = SR04M_u_GetMedium(u_rawDistance, 10u);
+
+  return u_ret;
+}
+
 void SR04M_u_SetMode(SR04M_Object* p_obj, SR04M_Modes e_mode)
 {
   p_obj->mode = e_mode;
@@ -267,6 +288,32 @@ static SR04M_Status SR04M_t_SerialModeLP(SR04M_Object* p_obj, uint16_t* u_distan
   }
 
   return e_retVal;
+}
+
+static uint16_t SR04M_u_GetMedium(uint16_t u_arr[], uint8_t u_len)
+{
+  for(int i = 1; i < u_len; i++)
+  {
+    int key = u_arr[i];
+    int j   = i - 1;
+    while(j >= 0 && u_arr[j] > key)
+    {
+      u_arr[j + 1] = u_arr[j];
+      j--;
+    }
+    u_arr[j + 1] = key;
+  }
+
+  if(u_len % 2 == 0)
+  {
+    // Si es par, devuelve el promedio de los dos del medio
+    return (u_arr[u_len / 2 - 1] + u_arr[u_len / 2]) / 2;
+  }
+  else
+  {
+    // Si es impar, devuelve el del medio
+    return u_arr[u_len / 2];
+  }
 }
 
 #ifdef __cplusplus
